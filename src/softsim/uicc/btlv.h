@@ -13,6 +13,13 @@
 
 #define SS_BERTLV_MAX_LEN_BYTES 4
 
+/* Deepest nesting decoded: an FCP, '62' > 'A5' > DO. Deeper content counts as
+ * undecodable (.padded). A port that must accept deeper CREATE FILE templates
+ * may raise it, at one decoder stack frame per level. */
+#ifndef SS_BERTLV_MAX_DEPTH
+#define SS_BERTLV_MAX_DEPTH 3
+#endif
+
 enum ber_tlv_cls {
 	BER_TLV_UNIV_CLS,
 	BER_TLV_APPL_CLS,
