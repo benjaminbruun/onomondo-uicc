@@ -381,7 +381,7 @@ int ss_uicc_file_ops_cmd_update_binary(struct ss_apdu *apdu)
 
 	rc = ss_storage_write_file(&apdu->lchan->fs_path, apdu->cmd, offset, apdu->lc);
 	if (rc < 0)
-		return SS_SW_ERR_WRONG_PARAM_ENOMEM;
+		return SS_SW_ERR_CHECKING_NO_PRECISE_DIAG;
 
 	record_file_change(apdu);
 
@@ -571,7 +571,7 @@ int ss_uicc_file_ops_cmd_update_record(struct ss_apdu *apdu)
 	rc = ss_fs_write_file_record(&apdu->lchan->fs_path, record_number, apdu->cmd,
 				     selected_file->fcp_file_descr->record_len);
 	if (rc != 0)
-		return SS_SW_ERR_WRONG_PARAM_ENOMEM;
+		return SS_SW_ERR_CHECKING_NO_PRECISE_DIAG;
 
 	/* Everything went successful, update record pointer */
 	apdu->lchan->current_record = record_number_new;
