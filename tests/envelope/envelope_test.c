@@ -13,15 +13,20 @@ extern uint32_t ss_log_mask;
 
 /* The shipped TAR record mandates ciphering (MSL 0x06), which rejects an
  * unciphered command packet before the header is parsed. Relax it so the
- * cleartext header path becomes reachable. Patches the build-dir copy only. */
+ * cleartext header path becomes reachable. Patches the test's private copy of
+ * files/ (see FILES in tests/CMakeLists.txt), never the source tree. */
 static void relax_tar_msl(void)
 {
 	FILE *f = fopen("files/3f00/a004", "r+");
+	int rc;
+	size_t written;
 
 	assert(f);
 	/* Records are stored as ASCII hex; MSL is byte 3 of struct tar_record. */
-	assert(fseek(f, 6, SEEK_SET) == 0);
-	assert(fwrite("00", 1, 2, f) == 2);
+	rc = fseek(f, 6, SEEK_SET);
+	assert(rc == 0);
+	written = fwrite("00", 1, 2, f);
+	assert(written == 2);
 	fclose(f);
 }
 
