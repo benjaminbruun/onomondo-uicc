@@ -108,7 +108,10 @@ static int read_file_def(char *host_path, struct ss_file *file)
 		return -EINVAL;
 	}
 
-	file->fci = ss_buf_alloc_and_cpy(line_buf, rc);
+	file->fci = ss_buf_try_alloc(rc);
+	if (!file->fci)
+		return -ENOMEM;
+	memcpy(file->fci->data, line_buf, rc);
 
 	return 0;
 }

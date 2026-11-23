@@ -518,6 +518,11 @@ size_t ss_transact(struct ss_context *ctx, uint8_t *response_buf, size_t respons
 	}
 
 	apdu = ss_apdu_new(ctx);
+	if (!apdu) {
+		response_buf[response_len++] = SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED >> 8;
+		response_buf[response_len++] = SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED & 0xff;
+		return response_len;
+	}
 
 	/* Parse APDU */
 	memcpy(&apdu->hdr, request_buf, sizeof(apdu->hdr));
@@ -606,6 +611,11 @@ size_t ss_application_apdu_transact(struct ss_context *ctx, uint8_t *response_bu
 	}
 
 	apdu = ss_apdu_new(ctx);
+	if (!apdu) {
+		response_buf[response_len++] = SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED >> 8;
+		response_buf[response_len++] = SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED & 0xff;
+		return response_len;
+	}
 
 	/* note that this parsing assumes that the buffer is a single apdu */
 	ss_apdu_parse_exhaustive(apdu, request_buf, _request_len);
@@ -635,6 +645,11 @@ size_t ss_application_apdu_transact(struct ss_context *ctx, uint8_t *response_bu
 			apdu_orig = apdu;
 
 			apdu = ss_apdu_new(ctx);
+			if (!apdu) {
+				apdu = apdu_orig;
+				apdu->sw = SS_SW_ERR_CHECKING_NO_PRECISE_DIAG;
+				break;
+			}
 			apdu->le = apdu_orig->sw & 0xff;
 			memcpy(&apdu->hdr, &apdu_orig->hdr, sizeof(apdu->hdr));
 			apdu->hdr.p3 = apdu->le;
@@ -647,6 +662,11 @@ size_t ss_application_apdu_transact(struct ss_context *ctx, uint8_t *response_bu
 			SS_LOGP(SAPDU, LINFO, "GET AVAILABLE DATA, le=%d\n", apdu->sw & 0xff);
 			apdu_orig = apdu;
 			apdu = ss_apdu_new(ctx);
+			if (!apdu) {
+				apdu = apdu_orig;
+				apdu->sw = SS_SW_ERR_CHECKING_NO_PRECISE_DIAG;
+				break;
+			}
 
 			apdu->le = apdu_orig->sw & 0xff;
 			apdu->sw = 0x00;

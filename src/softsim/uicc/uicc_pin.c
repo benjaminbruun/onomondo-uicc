@@ -552,7 +552,7 @@ struct ss_buf *ss_uicc_pin_gen_pst_do(void)
 	int rc;
 	int i = 0;
 
-	pin_stat_templ = ss_buf_alloc(3 + 3 * SS_ARRAY_SIZE(pins_in_psdo));
+	pin_stat_templ = ss_buf_try_alloc(3 + 3 * SS_ARRAY_SIZE(pins_in_psdo));
 	if (!pin_stat_templ)
 		return pin_stat_templ;
 	/* PS_DO */

@@ -30,6 +30,8 @@ static struct ss_file *path_add(struct ss_list *path, uint32_t fid)
 	struct ss_file *file;
 
 	file = SS_ALLOC(struct ss_file);
+	if (!file)
+		return NULL;
 	memset(file, 0, sizeof(*file));
 	file->fid = fid;
 	ss_list_put(path, &file->list);
@@ -172,6 +174,8 @@ int ss_fs_select(struct ss_list *path, uint32_t fid)
 
 	/* Add a new file to the path */
 	selected_file = path_add(path, fid);
+	if (!selected_file)
+		return -ENOMEM;
 
 	/* Read the file defintion from storage */
 	rc = ss_storage_get_file_def(path);
@@ -223,7 +227,9 @@ int ss_fs_delete_child(struct ss_list *path, uint32_t fid)
 {
 	int rc;
 
-	path_add(path, fid);
+	/* Without the child on the path, the delete would hit the parent */
+	if (!path_add(path, fid))
+		return -ENOMEM;
 	rc = ss_storage_delete(path);
 	ss_fs_select_parent(path);
 	return rc;
@@ -386,10 +392,20 @@ int ss_fs_create(struct ss_list *path, const uint8_t *fci_data, size_t fci_len)
 	 * confused with a proper select. We just fullfill the bare minimum
 	 * requirements that the storage layer will accept */
 	file = path_add(path, fid);
+	if (!file) {
+		rc = -ENOMEM;
+		goto leave;
+	}
 
 	/* Note: When the file is removed from the path again (see below),
 	 * the fci we allocate here is freed. */
-	fci = ss_buf_alloc_and_cpy(fci_data, fci_len);
+	fci = ss_buf_try_alloc(fci_len);
+	if (!fci) {
+		ss_fs_select_parent(path);
+		rc = -ENOMEM;
+		goto leave;
+	}
+	memcpy(fci->data, fci_data, fci_len);
 	file->fci = fci;
 
 	if (file_descr.type == SS_FCP_DF_OR_ADF)

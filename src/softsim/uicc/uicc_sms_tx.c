@@ -218,6 +218,10 @@ static int sms_tx_single(struct ss_uicc_sms_tx_state *state, const struct ss_sm_
 
 	/* Encode and Enqueue SMS TPDU */
 	sm = SS_ALLOC(struct ss_uicc_sms_tx_sm);
+	if (!sm) {
+		SS_LOGP(SSMS, LERROR, "out of memory - SMS-TPDU tossed!\n");
+		return -ENOMEM;
+	}
 	rc = encode_sm(sm->msg, sizeof(sm->msg), sm_hdr, ud_hdr, ud_hdr_len, tp_ud, tp_ud_len, recalc_tp_udl);
 	if (rc < 0) {
 		SS_FREE(sm);

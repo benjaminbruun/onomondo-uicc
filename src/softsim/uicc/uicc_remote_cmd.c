@@ -1067,7 +1067,7 @@ int ss_uicc_remote_cmd_receive(size_t cmd_packet_len, uint8_t *cmd_packet, size_
 	 * execution of the remote command. */
 
 	/* Allocate memory for the response. */
-	response_message = ss_buf_alloc(SS_UICC_REMOTE_COMMAND_RESPONSE_MAXSIZE);
+	response_message = ss_buf_try_alloc(SS_UICC_REMOTE_COMMAND_RESPONSE_MAXSIZE);
 	if (response_message == NULL) {
 		SS_LOGP(SREMOTECMD, LERROR, "No space to allocate response message\n");
 		ret = SS_SW_ERR_EXEC_MEMORY_PROBLEM;

@@ -56,7 +56,9 @@ static int fix_short_fd(struct ss_list *fcp_decoded_envelope)
 	 * record oriented files are 3 byte long. */
 	if (fcp_ie_fd->value->len == 4) {
 		/* extend the length of the file descriptor length */
-		fd_fixed = ss_buf_alloc(5);
+		fd_fixed = ss_buf_try_alloc(5);
+		if (!fd_fixed)
+			return -ENOMEM;
 		memcpy(fd_fixed->data, fcp_ie_fd->value->data, fcp_ie_fd->value->len);
 		fd_fixed->data[4] = 0x00;
 

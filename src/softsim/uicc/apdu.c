@@ -20,6 +20,8 @@ struct ss_apdu *ss_apdu_new(struct ss_context *ctx)
 {
 	struct ss_apdu *apdu;
 	apdu = SS_ALLOC(struct ss_apdu);
+	if (!apdu)
+		return NULL;
 	memset(apdu, 0, sizeof(*apdu));
 	apdu->ctx = ctx;
 	SS_LOGP(SLCHAN, LDEBUG, "allocating APDU %p\n", apdu);
