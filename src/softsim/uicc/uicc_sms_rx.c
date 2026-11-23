@@ -103,7 +103,9 @@ static int put_sm_part(struct ss_uicc_sms_rx_state *state, struct ss_uicc_sms_rx
  * the last outstanding part has arrived, and is left NULL while parts are
  * still outstanding. A non-zero return is the SW to report for a part that
  * was rejected outright; *out_result is left NULL in that case too, and any
- * state buffered so far for the message is freed. */
+ * state buffered so far for the message is freed. Running out of memory gives
+ * 9300: TS 31.111 clause 7.1.1.1 then has the ME retry or report busy to the
+ * network, rather than acknowledge an SM that was dropped. */
 static int concat_sm(struct ss_uicc_sms_rx_state *state, uint8_t *tp_ud, size_t tp_ud_len,
 		     struct tlv8_ie *concat_sm_desc_ie, struct ss_list *ud_hdr_dec, struct ss_buf **out_result)
 {
@@ -144,7 +146,7 @@ static int concat_sm(struct ss_uicc_sms_rx_state *state, uint8_t *tp_ud, size_t 
 		if (!result) {
 			SS_LOGP(SSMS, LERROR, "no memory to copy message (%zu bytes) handled as single SM.\n",
 				tp_ud_len);
-			return SS_SW_ERR_WRONG_PARAM_ENOMEM;
+			return SS_SW_POSTP_SAT_BUSY_CANNOT_EXEC;
 		}
 		memcpy(result->data, tp_ud, tp_ud_len);
 		*out_result = result;
@@ -208,7 +210,7 @@ static int concat_sm(struct ss_uicc_sms_rx_state *state, uint8_t *tp_ud, size_t 
 		SS_LOGP(SSMS, LERROR, "no memory to buffer part %u/%u of message %u, dropping message.\n", msg_part_no,
 			msg_parts, msg_id);
 		clear_state(state);
-		return SS_SW_ERR_WRONG_PARAM_ENOMEM;
+		return SS_SW_POSTP_SAT_BUSY_CANNOT_EXEC;
 	}
 	memcpy(sm->tp_ud, tp_ud, tp_ud_len);
 	sm->tp_ud_len = tp_ud_len;
@@ -240,7 +242,7 @@ static int concat_sm(struct ss_uicc_sms_rx_state *state, uint8_t *tp_ud, size_t 
 		SS_LOGP(SSMS, LERROR, "no memory to reassemble message %u (%zu bytes), dropping message.\n", msg_id,
 			result_len);
 		clear_state(state);
-		return SS_SW_ERR_WRONG_PARAM_ENOMEM;
+		return SS_SW_POSTP_SAT_BUSY_CANNOT_EXEC;
 	}
 	result_ptr = result->data;
 	for (i = 0; i < msg_parts; i++) {
