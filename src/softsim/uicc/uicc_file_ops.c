@@ -117,14 +117,14 @@ int ss_uicc_file_ops_cmd_status(struct ss_apdu *apdu)
 		rc = fcp_update_pin_status(current_df, "status");
 		if (rc < 0) {
 			SS_LOGP(SFILE, LDEBUG, "status failed, unable to update the PIN status template.\n");
-			return SS_SW_ERR_EXEC_MEMORY_PROBLEM;
+			return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 		}
 
 		/* An FCP is returned as one TLV; a larger one cannot be delivered. */
 		if (current_df->fci->len > sizeof(apdu->rsp)) {
 			SS_LOGP(SFILE, LERROR, "FCI length %u exceeds the response buffer\n",
 				(unsigned)current_df->fci->len);
-			return SS_SW_ERR_EXEC_MEMORY_PROBLEM;
+			return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 		}
 
 		/* Per TS 102 221, Le=0 (Case 2 short), Le=256 (0x00), or Le=65535
@@ -153,7 +153,7 @@ int ss_uicc_file_ops_cmd_status(struct ss_apdu *apdu)
 			if (df_name.len + 2 > sizeof(apdu->rsp)) {
 				SS_LOGP(SFILE, LERROR, "DF name length %u exceeds the response buffer\n",
 					(unsigned)df_name.len);
-				return SS_SW_ERR_EXEC_MEMORY_PROBLEM;
+				return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 			}
 			apdu->rsp[0] = TS_102_221_IEI_FCP_DF_NAME;
 			apdu->rsp[1] = df_name.len;
