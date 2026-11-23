@@ -234,7 +234,7 @@ err:
 /*! Select a path by using the FIDs from another path.
  *  \param[out] path_out user provided memory to store the output path.
  *  \param[in] path path that shall be used as input for select.
- *  \returns 0 success, -EINVAL on failure
+ *  \returns 0 success, -ENOMEM when out of memory, -EINVAL on other failure
  *
  *  In the failure case, the output path can be incomplete, and is selected up
  *  to the point in the path where that was possible.
@@ -250,9 +250,8 @@ int ss_fs_utils_path_select(struct ss_list *path_out, const struct ss_list *path
 
 	SS_LIST_FOR_EACH(path, path_cursor, struct ss_file, list) {
 		rc = ss_fs_select(path_out, path_cursor->fid);
-		if (rc < 0) {
-			return -EINVAL;
-		}
+		if (rc < 0)
+			return rc;
 	}
 
 	return 0;

@@ -95,7 +95,7 @@ leave:
 /*! Resolve an SFI to FID by quering the SFI to FID translation file.
  *  \param[in] path path to the current directory.
  *  \param[in] sfi SFI to look for.
- *  \returns 0 success, -EINVAL on failure. */
+ *  \returns FID on success, -ENOMEM when out of memory, -EINVAL on other failure. */
 int ss_sfi_resolve(const struct ss_list *path, uint8_t sfi)
 {
 	struct ss_list path_copy;
@@ -111,12 +111,11 @@ int ss_sfi_resolve(const struct ss_list *path, uint8_t sfi)
 	/* read full FID from SFI file */
 	rc = ss_fs_utils_path_clone(&path_copy, path);
 	if (rc < 0)
-		return -EINVAL;
+		return rc;
 	rc = ss_fs_select(&path_copy, SFI_FID);
 	if (rc < 0) {
 		SS_LOGP(SSFI, LERROR, "cannot resolve SFI=%02x, unable to select lookup file %s\n", sfi,
 			ss_fs_utils_dump_path(&path_copy));
-		rc = -EINVAL;
 		goto leave;
 	}
 	fid = ss_fs_read_file_record(&path_copy, sfi);

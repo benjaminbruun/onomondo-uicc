@@ -117,7 +117,7 @@ int ss_uicc_file_ops_cmd_status(struct ss_apdu *apdu)
 		rc = fcp_update_pin_status(current_df, "status");
 		if (rc < 0) {
 			SS_LOGP(SFILE, LDEBUG, "status failed, unable to update the PIN status template.\n");
-			return SS_SW_ERR_EXEC_MEMORY_PROBLEM;
+			return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 		}
 
 		/* An FCP is returned as one TLV; a larger one cannot be delivered. */
@@ -238,9 +238,12 @@ static int select_by_sfi(struct ss_apdu *apdu, uint8_t sfi)
 	int rc = ss_sfi_resolve(&apdu->lchan->fs_path, sfi);
 	if (rc < 0) {
 		apdu->le = 0;
-		return SS_SW_ERR_CMD_NOT_ALLOWED_NO_EF_SELECTED;
+		return rc == -ENOMEM ? SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED : SS_SW_ERR_CMD_NOT_ALLOWED_NO_EF_SELECTED;
 	}
-	ss_fs_select(&apdu->lchan->fs_path, rc);
+	if (ss_fs_select(&apdu->lchan->fs_path, rc) == -ENOMEM) {
+		apdu->le = 0;
+		return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
+	}
 	ss_access_populate(apdu->lchan);
 
 	/* Reset current record for record oriented files. */
@@ -832,6 +835,12 @@ skip:
 	return 0;
 }
 
+/* Running out of memory does not mean the file is missing: 6400, nothing changed */
+static int select_failed(int rc)
+{
+	return rc == -ENOMEM ? SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED : SS_SW_ERR_WRONG_PARAM_FILE_NOT_FOUND;
+}
+
 static int select_by_fid(struct ss_apdu *apdu)
 {
 	uint16_t fid;
@@ -857,7 +866,7 @@ static int select_by_fid(struct ss_apdu *apdu)
 		ss_path_reset(&apdu->lchan->fs_path);
 		rc = ss_fs_utils_path_select(&apdu->lchan->fs_path, &apdu->lchan->adf_path);
 		if (rc < 0)
-			return SS_SW_ERR_WRONG_PARAM_FILE_NOT_FOUND;
+			return select_failed(rc);
 		goto leave;
 	}
 
@@ -867,6 +876,8 @@ static int select_by_fid(struct ss_apdu *apdu)
 		SS_LOGP(SFILE, LDEBUG, "success: file (%04x) found in the current DF.\n", fid);
 		goto leave;
 	}
+	if (rc == -ENOMEM)
+		return select_failed(rc);
 
 	/* A failed select beforehand leaves us with the current DF. If the
 	 * FID of the current DF matches the FID we intend to select, then
@@ -909,6 +920,8 @@ static int select_by_fid(struct ss_apdu *apdu)
 			goto leave;
 		}
 		ss_fs_select_parent(&apdu->lchan->fs_path);
+	} else if (rc == -ENOMEM) {
+		return select_failed(rc);
 	}
 
 	/* As a last resort we may try to walk up the path and check if we meet
@@ -978,7 +991,7 @@ static int select_by_df_name(struct ss_apdu *apdu)
 		 * the supplied DF_name. */
 		rc = ss_fs_select(&apdu->lchan->fs_path, 0x3f00);
 		if (rc < 0)
-			return SS_SW_ERR_WRONG_PARAM_FILE_NOT_FOUND;
+			return select_failed(rc);
 		rc = ss_df_name_resolve(&apdu->lchan->fs_path, apdu->cmd, apdu->lc);
 		if (rc < 0)
 			return SS_SW_ERR_WRONG_PARAM_REFERENCED_DATA_NOT_FOUND;
@@ -988,7 +1001,7 @@ static int select_by_df_name(struct ss_apdu *apdu)
 	fid = (uint32_t)(rc & 0xffff);
 	rc = ss_fs_select(&apdu->lchan->fs_path, fid);
 	if (rc < 0)
-		return SS_SW_ERR_WRONG_PARAM_FILE_NOT_FOUND;
+		return select_failed(rc);
 leave:
 	ss_access_populate(apdu->lchan);
 
@@ -1042,7 +1055,7 @@ static int select_path(struct ss_apdu *apdu, bool from_mf)
 	if (from_mf) {
 		rc = ss_fs_select(&apdu->lchan->fs_path, 0x3f00);
 		if (rc < 0)
-			return SS_SW_ERR_WRONG_PARAM_FILE_NOT_FOUND;
+			return select_failed(rc);
 	} else {
 		selected_file = ss_get_file_from_path(&apdu->lchan->fs_path);
 		if (!selected_file)
@@ -1068,7 +1081,7 @@ static int select_path(struct ss_apdu *apdu, bool from_mf)
 		}
 
 		if (rc < 0)
-			return SS_SW_ERR_WRONG_PARAM_FILE_NOT_FOUND;
+			return select_failed(rc);
 	}
 
 	ss_access_populate(apdu->lchan);
@@ -1151,12 +1164,12 @@ int ss_uicc_file_ops_cmd_select(struct ss_apdu *apdu)
 	/* generate full FCP string */
 	rc = fcp_update_pin_status(selected_file, "select");
 	if (rc < 0)
-		return SS_SW_ERR_EXEC_MEMORY_PROBLEM;
+		return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 
 	/* Update path to currently active ADF */
 	rc = update_active_adf(apdu->lchan);
 	if (rc < 0)
-		return SS_SW_ERR_EXEC_MEMORY_PROBLEM;
+		return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 
 	/* Return FCP template if requested */
 	if ((apdu->hdr.p2 & 0x0c) == 0x04) {

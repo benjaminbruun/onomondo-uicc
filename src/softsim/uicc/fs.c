@@ -182,7 +182,7 @@ int ss_fs_select(struct ss_list *path, uint32_t fid)
 	if (rc < 0) {
 		ss_fs_select_parent(path);
 		SS_LOGP(SFS, LINFO, "select fid=%04x failed, path=%s\n", fid, ss_fs_utils_dump_path(path));
-		return -EINVAL;
+		return rc == -ENOMEM ? rc : -EINVAL;
 	}
 
 	/* Validate and normalize fcp form of fci */
