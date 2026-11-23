@@ -1145,18 +1145,18 @@ int ss_uicc_file_ops_cmd_select(struct ss_apdu *apdu)
 	selected_file = ss_get_file_from_path(&apdu->lchan->fs_path);
 	if (!selected_file) {
 		SS_LOGP(SFILE, LDEBUG, "select failed -- no file selected!\n");
-		return SS_SW_ERR_EXEC_MEMORY_PROBLEM;
+		return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 	}
 
 	/* generate full FCP string */
 	rc = fcp_update_pin_status(selected_file, "select");
 	if (rc < 0)
-		return SS_SW_ERR_EXEC_MEMORY_PROBLEM;
+		return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 
 	/* Update path to currently active ADF */
 	rc = update_active_adf(apdu->lchan);
 	if (rc < 0)
-		return SS_SW_ERR_EXEC_MEMORY_PROBLEM;
+		return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 
 	/* Return FCP template if requested */
 	if ((apdu->hdr.p2 & 0x0c) == 0x04) {
@@ -1164,7 +1164,7 @@ int ss_uicc_file_ops_cmd_select(struct ss_apdu *apdu)
 		if (selected_file->fci->len > sizeof(apdu->rsp)) {
 			SS_LOGP(SFILE, LERROR, "FCI length %u exceeds the response buffer\n",
 				(unsigned)selected_file->fci->len);
-			return SS_SW_ERR_EXEC_MEMORY_PROBLEM;
+			return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 		}
 		memcpy(apdu->rsp, selected_file->fci->data, selected_file->fci->len);
 		apdu->rsp_len = selected_file->fci->len;
