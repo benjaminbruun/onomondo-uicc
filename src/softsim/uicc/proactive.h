@@ -218,8 +218,8 @@ struct ss_proactive_ctx {
 	bool enabled;
 	/*! TERMINAL PROFILE data */
 	uint8_t term_profile[256];
-	/*! data to be fetched by FETCH command */
-	uint8_t data[256];
+	/*! command to be fetched by FETCH command, allocated while one is pending */
+	struct ss_buf *data;
 	/*! length of data to be fetched by FETCH command */
 	uint8_t data_len;
 	/*! callback to hanle data from TERMINAL RESPONSE command */
