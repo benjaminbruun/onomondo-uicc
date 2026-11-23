@@ -335,7 +335,7 @@ int ss_uicc_file_ops_cmd_read_binary(struct ss_apdu *apdu)
 
 	buf = ss_storage_read_file(&apdu->lchan->fs_path, offset, read_len);
 	if (!buf)
-		return SS_SW_ERR_WRONG_PARAM_ENOMEM;
+		return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 
 	memcpy(apdu->rsp, buf->data, buf->len);
 	apdu->rsp_len = buf->len;
@@ -517,7 +517,7 @@ int ss_uicc_file_ops_cmd_read_record(struct ss_apdu *apdu)
 
 	buf = ss_fs_read_file_record(&apdu->lchan->fs_path, record_number);
 	if (!buf)
-		return SS_SW_ERR_WRONG_PARAM_ENOMEM;
+		return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 
 	memcpy(apdu->rsp, buf->data, buf->len);
 	apdu->rsp_len = buf->len;
@@ -763,7 +763,7 @@ int ss_uicc_file_ops_cmd_search_record(struct ss_apdu *apdu)
 	}
 
 	/* Both search modes take the starting record from P1 unchecked, so bound
-	 * it here rather than letting the read below fail with 6a84. */
+	 * it here rather than letting the read below fail. */
 	if (search_record_number > n_records) {
 		apdu->le = 0;
 		return SS_SW_ERR_WRONG_PARAM_RECORD_NOT_FOUND;
@@ -781,7 +781,7 @@ int ss_uicc_file_ops_cmd_search_record(struct ss_apdu *apdu)
 	while (1) {
 		buf = ss_fs_read_file_record(&apdu->lchan->fs_path, search_record_number);
 		if (!buf)
-			return SS_SW_ERR_WRONG_PARAM_ENOMEM;
+			return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 
 		/* Find dynamic offset */
 		if (search_offset_dyn) {
