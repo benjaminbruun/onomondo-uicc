@@ -501,7 +501,7 @@ int ss_uicc_file_ops_cmd_read_record(struct ss_apdu *apdu)
 	if (selected_file->fcp_file_descr->record_len > 0xff) {
 		SS_LOGP(SFILE, LERROR, "record length %u exceeds the response buffer\n",
 			selected_file->fcp_file_descr->record_len);
-		return SS_SW_ERR_EXEC_MEMORY_PROBLEM;
+		return SS_SW_ERR_EXEC_NO_INFO_NV_UNCHANGED;
 	}
 
 	if (record_number > selected_file->fcp_file_descr->number_of_records) {
