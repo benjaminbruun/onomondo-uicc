@@ -146,7 +146,7 @@ static int put_refresh(struct ss_context *ctx, uint8_t mode, const uint8_t *file
 
 	if (!cmd) {
 		SS_LOGP(SREFRESH, LERROR, "Sending REFRESH failed -- cannot encode command!\n");
-		return -EINVAL;
+		return -ENOMEM;
 	}
 	rc = ss_proactive_put(ctx, term_response_cb, cmd->data, cmd->len);
 	ss_buf_free(cmd);
@@ -214,8 +214,8 @@ void ss_uicc_refresh_poll(struct ss_context *ctx)
 		/* fallthrough */
 	case SS_REFRESH_PENDING:
 		rc = send_refresh(ctx, state);
-		if (rc == -EBUSY) {
-			SS_LOGP(SREFRESH, LERROR, "cannot send REFRESH, another command is busy, retrying...\n");
+		if (rc == -EBUSY || rc == -ENOMEM) {
+			SS_LOGP(SREFRESH, LERROR, "cannot send REFRESH now (%d), retrying...\n", rc);
 			return;
 		} else if (rc < 0) {
 			/* Note: This should not happen since it would mean
