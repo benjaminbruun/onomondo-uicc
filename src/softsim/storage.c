@@ -109,6 +109,8 @@ static int read_file_def(char *host_path, struct ss_file *file)
 
 	/* Note: Module fs.c must ensure freeing of the fci data */
 	file->fci = ss_buf_from_hexstr(line_buf);
+	if (!file->fci)
+		return -ENOMEM;
 
 	return 0;
 }
@@ -155,6 +157,8 @@ struct ss_buf *ss_storage_read_file(const struct ss_list *path, size_t read_offs
 		return NULL;
 
 	line_buf = SS_ALLOC_N(read_len * 2 + 1);
+	if (!line_buf)
+		return NULL;
 	memset(line_buf, 0, read_len * 2 + 1);
 
 	fd = ss_fopen(host_path, "r");

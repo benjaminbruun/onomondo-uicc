@@ -123,11 +123,14 @@ size_t ss_binary_from_hexstr(uint8_t *binary, size_t binary_len, const char *hex
 
 /*! Allocate a new ss_buf and fill it with data from given hexstring.
  *  \param[in] hexstr pointer to human readable hexstring.
- *  \returns pointer to newly allocated ss_buf object. */
+ *  \returns pointer to newly allocated ss_buf object, NULL when out of memory. */
 struct ss_buf *ss_buf_from_hexstr(const char *hexstr)
 {
 	int bin_len = strlen(hexstr) / 2;
-	struct ss_buf *sb = ss_buf_alloc(bin_len);
+	struct ss_buf *sb = ss_buf_try_alloc(bin_len);
+
+	if (!sb)
+		return NULL;
 
 	ss_binary_from_hexstr(sb->data, sb->len, hexstr);
 
